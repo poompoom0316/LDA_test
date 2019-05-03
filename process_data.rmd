@@ -1,0 +1,72 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+# データの読み込みから頻度行列の生成まで
+```{r}
+library(RMeCab)
+library(openxlsx)
+library(magrittr)
+path = "Data/collected_tweets.xlsx"
+df1 = read.xlsx(path)
+freq_mat = docMatrixDF(df1$text, minFreq = 4)
+freq_mat2 = docMatrixDF(df1$text, minFreq = 4,  weight = "tf*idf" )
+
+q1 = freq_mat %>% rowSums() %>% sort(decreasing = TRUE) 
+q2 = freq_mat2 %>% rowMeans() %>% sort(decreasing = TRUE)
+
+
+
+library(slam)
+test.sparse <-  as.simple_triplet_matrix(t(freq_mat)) #スパースな行列に変換
+
+library (tm) # この2行で重みを設定
+test.sparse2 <-  as.DocumentTermMatrix ( test.sparse, weighting = weightTf ) #
+
+
+library(topicmodels)
+# # class(test.sparsea) <- "DocumentTermMatrix" # 不要
+topic.mod <- LDA(test.sparse2, control = list(alpha = 0.1), k = 5)
+
+clusters = (topic.mod@gamma>0.9)%*%(1:5)
+
+texts_cluster = lapply(X=1:5, FUN=function(x){df1$text[clusters==x]})
+
+```
+
+```{r}
+texts_cluster
+```
+
+
+# データの読み込みから頻度行列の生成まで
+```{r}
+library(RMeCab)
+library(openxlsx)
+library(magrittr)
+path = "Data/collected_tweets_shibuya.xlsx"
+df1 = read.xlsx(path)
+freq_mat = docMatrixDF(df1$text, minFreq = 3)
+freq_mat2 = docMatrixDF(df1$text, minFreq = 3,  weight = "tf*idf" )
+
+q1 = freq_mat %>% rowSums() %>% sort(decreasing = TRUE) 
+q2 = freq_mat2 %>% rowMeans() %>% sort(decreasing = TRUE)
+
+
+
+library(slam)
+test.sparse <-  as.simple_triplet_matrix(t(freq_mat)) #スパースな行列に変換
+
+library (tm) # この2行で重みを設定
+test.sparse2 <-  as.DocumentTermMatrix ( test.sparse, weighting = weightTf ) #
+
+
+library(topicmodels)
+# # class(test.sparsea) <- "DocumentTermMatrix" # 不要
+topic.mod <- LDA(test.sparse2, control = list(alpha = 0.1), k = 5)
+```
